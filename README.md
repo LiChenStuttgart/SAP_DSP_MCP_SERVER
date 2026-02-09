@@ -32,7 +32,7 @@ pip install sap-datasphere-mcp
 sap-datasphere-mcp
 ```
 
-**See [Getting Started Guide](GETTING_STARTED_GUIDE.md) for complete setup instructions.**
+**See `docs/OAUTH_SETUP.md` for OAuth setup details.**
 
 ---
 
@@ -87,17 +87,9 @@ sap-datasphere-mcp
 
 ---
 
-## 📚 Complete Documentation
+## 📚 Documentation
 
-**New! Comprehensive production-ready documentation:**
-
-| Guide | Description | Time to Read |
-|-------|-------------|--------------|
-| 📖 [**Getting Started Guide**](GETTING_STARTED_GUIDE.md) | 10-minute quick start with examples | 10 min |
-| 📋 [**Tools Catalog**](TOOLS_CATALOG.md) | Complete reference for all 44 tools | 30 min |
-| 🔧 [**API Reference**](API_REFERENCE.md) | Technical API docs with Python/cURL examples | 45 min |
-| 🚀 [**Deployment Guide**](DEPLOYMENT.md) | Production deployment (Docker, K8s, PyPI) | 20 min |
-| 🐛 [**Troubleshooting**](TROUBLESHOOTING.md) | Common issues and solutions | 15 min |
+- 📖 **OAuth Setup Guide**: `docs/OAUTH_SETUP.md`
 
 **Quick Links:**
 - 🆕 [What's New](#-current-status) - Latest features and improvements
@@ -110,7 +102,7 @@ sap-datasphere-mcp
 
 ## 📊 Query Examples & Available Data
 
-The server provides access to **37+ data assets** including sales, products, HR, financial, and time dimension data. See **[QUERY_EXAMPLES.md](QUERY_EXAMPLES.md)** for complete examples and documentation.
+The server provides access to **37+ data assets** including sales, products, HR, financial, and time dimension data.
 
 ### Available Data Assets
 
@@ -158,7 +150,7 @@ query_analytical_data(
 
 **Performance:** 1-5 second response times, up to 50K records per batch.
 
-**See [QUERY_EXAMPLES.md](QUERY_EXAMPLES.md) for 37+ data assets, 5 detailed examples, and best practices.**
+Additional examples are included below in this README.
 
 ---
 
@@ -882,8 +874,6 @@ cp .env.example .env  # Edit with your credentials
 python sap_datasphere_mcp_server.py
 ```
 
-📖 **See [DEPLOYMENT.md](DEPLOYMENT.md) for complete production deployment guide**
-
 ---
 
 ## 📈 Performance Characteristics
@@ -910,26 +900,11 @@ python sap_datasphere_mcp_server.py
 
 ## 🧪 Testing
 
-### Run Tests
+There is no dedicated test suite in this repo. For a quick sanity check, use the MCP Inspector:
+
 ```bash
-# Test MCP server startup
-python test_mcp_server_startup.py
-
-# Test authorization coverage
-python test_authorization_coverage.py
-
-# Test input validation
-python test_validation.py
-
-# Test with MCP Inspector
 npx @modelcontextprotocol/inspector python sap_datasphere_mcp_server.py
 ```
-
-### Test Results
-- ✅ **42/42 tools registered** - All tools properly defined
-- ✅ **42/42 tools authorized** - Authorization permissions configured
-- ✅ **41/42 tools working** - 98% success rate
-- ✅ **0 code bugs** - All implementation issues fixed
 
 ---
 
@@ -945,20 +920,19 @@ sap-datasphere-mcp/
 │   ├── input_validator.py              # Input validation framework
 │   ├── sql_sanitizer.py                # SQL injection prevention
 │   └── data_filter.py                  # PII and credential redaction
-├── 📁 config/                          # Configuration management
-│   └── settings.py                     # Environment-based settings
+├── 📁 config/                          # Configuration samples
+│   └── datasphere_config.json.example  # Example config
 ├── 📁 docs/                            # Documentation
 │   ├── OAUTH_SETUP.md                  # OAuth setup guide
-│   ├── TROUBLESHOOTING_CLAUDE_DESKTOP.md
-│   └── OAUTH_IMPLEMENTATION_STATUS.md
+│   └── images/                         # README images
 ├── 📄 sap_datasphere_mcp_server.py     # Main MCP server (42 tools)
 ├── 📄 cache_manager.py                 # Intelligent caching
 ├── 📄 telemetry.py                     # Monitoring and metrics
-├── 📄 mock_data_provider.py            # Mock data for testing
+├── 📄 mock_data.py                     # Mock data for testing
 ├── 📄 .env.example                     # Configuration template
 ├── 📄 requirements.txt                 # Python dependencies
 ├── 📄 README.md                        # This file
-└── 📄 ULTIMATE_TEST_RESULTS.md         # Comprehensive test results
+└── 📄 uv.lock                          # Lockfile
 ```
 
 ---

@@ -12,6 +12,7 @@ import re
 import time
 import secrets
 import os
+from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Sequence
 from dotenv import load_dotenv
@@ -56,8 +57,9 @@ from cache_manager import CacheManager, CacheCategory
 # Telemetry and monitoring
 from telemetry import TelemetryManager
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env file in the repo root (same directory as this file)
+dotenv_path = Path(__file__).with_name(".env")
+load_dotenv(dotenv_path=dotenv_path)
 
 # Configure logging
 log_level = os.getenv('LOG_LEVEL', 'INFO')
