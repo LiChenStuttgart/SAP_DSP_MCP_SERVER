@@ -1,0 +1,28 @@
+---
+applications:
+- name: sap_datasphere_mcp
+  random-route: true
+  path: ./
+  memory: 1024M
+  buildpacks: 
+  - python_buildpack
+  command: python sap_datasphere_mcp_server.py
+  services:
+  - pyuaa
+
+- name: web
+  random-route: true
+  path: web
+  memory: 256M
+  env:
+    destinations: >
+      [
+        {
+          "name":"sap_datasphere_mcp",
+          "url":"https://sap_datasphere_mcp-accountable-possum-vx.cfapps.eu10-004.hana.ondemand.com",
+          "forwardAuthToken": true
+        }
+      ]
+  services:
+  - pyuaa
+

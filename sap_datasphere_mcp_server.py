@@ -77,6 +77,8 @@ DATASPHERE_CONFIG = {
         "client_id": os.getenv('DATASPHERE_CLIENT_ID'),
         "client_secret": os.getenv('DATASPHERE_CLIENT_SECRET'),
         "token_url": os.getenv('DATASPHERE_TOKEN_URL'),
+        "authorize_url": os.getenv('DATASPHERE_AUTHORIZE_URL'),
+        "redirect_port": int(os.getenv('DATASPHERE_REDIRECT_PORT', '8400')),
         "scope": os.getenv('DATASPHERE_SCOPE')
     }
 }
@@ -91,7 +93,8 @@ if not USE_MOCK_DATA:
     has_oauth = all([
         DATASPHERE_CONFIG['oauth_config']['client_id'],
         DATASPHERE_CONFIG['oauth_config']['client_secret'],
-        DATASPHERE_CONFIG['oauth_config']['token_url']
+        DATASPHERE_CONFIG['oauth_config']['token_url'],
+        DATASPHERE_CONFIG['oauth_config']['authorize_url']
     ])
     logger.info(f"OAuth Configured: {has_oauth}")
     if not has_oauth:
@@ -7740,7 +7743,9 @@ async def main():
                 client_secret=DATASPHERE_CONFIG["oauth_config"]["client_secret"],
                 token_url=DATASPHERE_CONFIG["oauth_config"]["token_url"],
                 tenant_id=DATASPHERE_CONFIG["tenant_id"],
-                scope=DATASPHERE_CONFIG["oauth_config"].get("scope")
+                authorize_url=DATASPHERE_CONFIG["oauth_config"]["authorize_url"],
+                scope=DATASPHERE_CONFIG["oauth_config"].get("scope"),
+                redirect_port=DATASPHERE_CONFIG["oauth_config"]["redirect_port"],
             )
 
             # Initialize connector

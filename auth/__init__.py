@@ -3,6 +3,7 @@ Authentication and authorization modules for SAP Datasphere MCP Server
 """
 
 from .oauth_handler import OAuthHandler, OAuthToken, OAuthError
+from .oauth_auth_code_handler import OAuthAuthCodeHandler, AuthCodeFlowError
 from .authorization import AuthorizationManager, PermissionLevel, ToolCategory, ToolPermission
 from .consent_manager import ConsentManager, ConsentRequest, ConsentResponse
 from .data_filter import DataFilter, filter_sensitive_data
@@ -15,6 +16,8 @@ __all__ = [
     "OAuthHandler",
     "OAuthToken",
     "OAuthError",
+    "OAuthAuthCodeHandler",
+    "AuthCodeFlowError",
     # Authorization
     "AuthorizationManager",
     "PermissionLevel",

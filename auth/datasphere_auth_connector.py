@@ -9,7 +9,8 @@ from typing import Dict, List, Optional, Any
 import aiohttp
 from dataclasses import dataclass
 
-from auth.oauth_handler import OAuthHandler, OAuthError
+from auth.oauth_handler import OAuthError
+from auth.oauth_auth_code_handler import OAuthAuthCodeHandler
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,9 @@ class DatasphereConfig:
     client_secret: str
     token_url: str
     tenant_id: str
+    authorize_url: str
     scope: Optional[str] = None
+    redirect_port: int = 8400
 
 
 class DatasphereAuthConnector:
@@ -37,13 +40,13 @@ class DatasphereAuthConnector:
     - Metadata
     """
 
-    def __init__(self, config: DatasphereConfig, oauth_handler: Optional[OAuthHandler] = None):
+    def __init__(self, config: DatasphereConfig, oauth_handler: Optional[OAuthAuthCodeHandler] = None):
         """
         Initialize Datasphere connector
 
         Args:
             config: Datasphere configuration
-            oauth_handler: Optional pre-configured OAuth handler
+            oauth_handler: Optional pre-configured OAuth Auth Code handler
         """
         self.config = config
         self.oauth_handler = oauth_handler
@@ -52,19 +55,21 @@ class DatasphereAuthConnector:
         logger.info(f"Datasphere connector initialized for {config.base_url}")
 
     async def initialize(self):
-        """Initialize the connector and acquire OAuth token"""
+        """Initialize the connector and acquire OAuth token via Authorization Code flow"""
         if not self.oauth_handler:
-            from auth.oauth_handler import create_oauth_handler
-
-            self.oauth_handler = await create_oauth_handler(
+            self.oauth_handler = OAuthAuthCodeHandler(
                 client_id=self.config.client_id,
                 client_secret=self.config.client_secret,
+                authorize_url=self.config.authorize_url,
                 token_url=self.config.token_url,
+                redirect_port=self.config.redirect_port,
                 scope=self.config.scope,
-                acquire_token=True
             )
 
-        logger.info("Datasphere connector initialized with OAuth authentication")
+        # Trigger interactive browser login to acquire initial token
+        await self.oauth_handler.get_token()
+
+        logger.info("Datasphere connector initialized with OAuth Authorization Code flow")
 
     async def _get_headers(self) -> Dict[str, str]:
         """
@@ -128,7 +133,7 @@ class DatasphereAuthConnector:
             OAuthError: On authentication errors
         """
         headers = await self._get_headers()
-        url = f"{self.config.base_url}/{endpoint.lstrip('/')}"
+        url = f"{self.config.base_url.rstrip('/')}/{endpoint.lstrip('/')}"
 
         if not self._session:
             self._session = aiohttp.ClientSession()
@@ -352,7 +357,7 @@ class DatasphereAuthConnector:
         try:
             # Use a lightweight endpoint that we know works
             # Use spaces endpoint (returns JSON with list of spaces)
-            url = f"{self.config.base_url}/api/v1/datasphere/consumption/catalog/spaces"
+            url = f"{self.config.base_url.rstrip('/')}/api/v1/datasphere/consumption/catalog/spaces"
             headers = await self._get_headers()
 
             # Ensure session is created
