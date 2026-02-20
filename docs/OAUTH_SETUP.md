@@ -97,10 +97,17 @@ Open `.env` in your text editor and paste your credentials:
 DATASPHERE_BASE_URL=https://your-tenant.eu10.hcs.cloud.sap
 DATASPHERE_TENANT_ID=your-tenant-id
 
+# Authentication mode
+# technical_user: OAuth Client Credentials
+# interactive: OAuth Authorization Code (browser login)
+AUTH_MODE=technical_user
+
 # OAuth 2.0 Credentials (Technical User)
 DATASPHERE_CLIENT_ID=sb-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx!xxxxx
 DATASPHERE_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 DATASPHERE_TOKEN_URL=https://your-tenant.authentication.eu10.hana.ondemand.com/oauth/token
+# Only required for AUTH_MODE=interactive
+# DATASPHERE_AUTHORIZE_URL=https://your-tenant.authentication.eu10.hana.ondemand.com/oauth/authorize
 
 # Optional: OAuth Scope (leave empty for default)
 DATASPHERE_SCOPE=

@@ -668,10 +668,17 @@ Create a `.env` file with your SAP Datasphere credentials:
 DATASPHERE_BASE_URL=https://your-tenant.eu10.hcs.cloud.sap
 DATASPHERE_TENANT_ID=your-tenant-id
 
+# Authentication mode
+# technical_user: OAuth Client Credentials (non-interactive, recommended for MCP)
+# interactive: OAuth Authorization Code (browser login)
+AUTH_MODE=technical_user
+
 # OAuth 2.0 Credentials (Technical User)
 DATASPHERE_CLIENT_ID=your-client-id
 DATASPHERE_CLIENT_SECRET=your-client-secret
 DATASPHERE_TOKEN_URL=https://your-tenant.authentication.eu10.hana.ondemand.com/oauth/token
+# DATASPHERE_AUTHORIZE_URL is required only when AUTH_MODE=interactive
+# DATASPHERE_AUTHORIZE_URL=https://your-tenant.authentication.eu10.hana.ondemand.com/oauth/authorize
 
 # Optional: Mock Data Mode (for testing without real credentials)
 USE_MOCK_DATA=false
@@ -698,6 +705,7 @@ Add to your `claude_desktop_config.json`:
       "command": "npx",
       "args": ["@mariodefe/sap-datasphere-mcp"],
       "env": {
+        "AUTH_MODE": "technical_user",
         "DATASPHERE_BASE_URL": "https://your-tenant.eu20.hcs.cloud.sap",
         "DATASPHERE_CLIENT_ID": "your-client-id",
         "DATASPHERE_CLIENT_SECRET": "your-client-secret",
@@ -717,6 +725,7 @@ Add to your `claude_desktop_config.json`:
       "command": "python",
       "args": ["-m", "sap_datasphere_mcp_server"],
       "env": {
+        "AUTH_MODE": "technical_user",
         "DATASPHERE_BASE_URL": "https://your-tenant.eu20.hcs.cloud.sap",
         "DATASPHERE_CLIENT_ID": "your-client-id",
         "DATASPHERE_CLIENT_SECRET": "your-client-secret",

@@ -68,12 +68,36 @@ logger = logging.getLogger("sap-datasphere-mcp")
 
 # Configuration from environment variables
 USE_MOCK_DATA = os.getenv('USE_MOCK_DATA', 'true').lower() == 'true'
+AUTH_MODE_RAW = os.getenv('AUTH_MODE', 'auto')
+
+
+def resolve_auth_mode(auth_mode: str, authorize_url: Optional[str]) -> str:
+    """Resolve AUTH_MODE aliases to a canonical mode."""
+    mode = (auth_mode or "auto").strip().lower()
+
+    if mode in {"interactive", "auth_code", "authorization_code"}:
+        return "interactive"
+    if mode in {"technical_user", "client_credentials", "tech_user"}:
+        return "technical_user"
+    if mode == "auto":
+        # Backward-compatible behavior: if authorize URL is configured, prefer interactive mode.
+        return "interactive" if authorize_url else "technical_user"
+
+    logger.warning(
+        f"Unknown AUTH_MODE '{auth_mode}'. Falling back to 'technical_user'. "
+        "Valid values: auto, interactive, technical_user."
+    )
+    return "technical_user"
+
+
+AUTH_MODE = resolve_auth_mode(AUTH_MODE_RAW, os.getenv('DATASPHERE_AUTHORIZE_URL'))
 
 DATASPHERE_CONFIG = {
     "tenant_id": os.getenv('DATASPHERE_TENANT_ID', 'f45fa9cc-f4b5-4126-ab73-b19b578fb17a'),
     "base_url": os.getenv('DATASPHERE_BASE_URL', 'https://f45fa9cc-f4b5-4126-ab73-b19b578fb17a.eu10.hcs.cloud.sap'),
     "use_mock_data": USE_MOCK_DATA,
     "oauth_config": {
+        "auth_mode": AUTH_MODE,
         "client_id": os.getenv('DATASPHERE_CLIENT_ID'),
         "client_secret": os.getenv('DATASPHERE_CLIENT_SECRET'),
         "token_url": os.getenv('DATASPHERE_TOKEN_URL'),
@@ -88,18 +112,22 @@ logger.info(f"=" * 80)
 logger.info(f"SAP Datasphere MCP Server Starting")
 logger.info(f"=" * 80)
 logger.info(f"Mock Data Mode: {USE_MOCK_DATA}")
+logger.info(f"Auth Mode: {AUTH_MODE} (AUTH_MODE={AUTH_MODE_RAW})")
 logger.info(f"Base URL: {DATASPHERE_CONFIG['base_url']}")
 if not USE_MOCK_DATA:
     has_oauth = all([
         DATASPHERE_CONFIG['oauth_config']['client_id'],
         DATASPHERE_CONFIG['oauth_config']['client_secret'],
         DATASPHERE_CONFIG['oauth_config']['token_url'],
-        DATASPHERE_CONFIG['oauth_config']['authorize_url']
     ])
+    if AUTH_MODE == "interactive":
+        has_oauth = has_oauth and bool(DATASPHERE_CONFIG['oauth_config']['authorize_url'])
     logger.info(f"OAuth Configured: {has_oauth}")
     if not has_oauth:
         logger.warning("⚠️  USE_MOCK_DATA=false but OAuth credentials missing!")
         logger.warning("⚠️  Server will fail to connect. Please configure .env file.")
+        if AUTH_MODE == "interactive":
+            logger.warning("AUTH_MODE=interactive requires DATASPHERE_AUTHORIZE_URL.")
 logger.info(f"=" * 80)
 
 # Initialize the MCP server
@@ -7743,6 +7771,7 @@ async def main():
                 client_secret=DATASPHERE_CONFIG["oauth_config"]["client_secret"],
                 token_url=DATASPHERE_CONFIG["oauth_config"]["token_url"],
                 tenant_id=DATASPHERE_CONFIG["tenant_id"],
+                auth_mode=DATASPHERE_CONFIG["oauth_config"]["auth_mode"],
                 authorize_url=DATASPHERE_CONFIG["oauth_config"]["authorize_url"],
                 scope=DATASPHERE_CONFIG["oauth_config"].get("scope"),
                 redirect_port=DATASPHERE_CONFIG["oauth_config"]["redirect_port"],

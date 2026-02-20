@@ -5,14 +5,16 @@ Integrates OAuth 2.0 authentication with Datasphere API calls
 """
 
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 import aiohttp
 from dataclasses import dataclass
 
-from auth.oauth_handler import OAuthError
+from auth.oauth_handler import OAuthError, OAuthHandler
 from auth.oauth_auth_code_handler import OAuthAuthCodeHandler
 
 logger = logging.getLogger(__name__)
+
+OAuthHandlerType = Union[OAuthAuthCodeHandler, OAuthHandler]
 
 
 @dataclass
@@ -23,9 +25,10 @@ class DatasphereConfig:
     client_secret: str
     token_url: str
     tenant_id: str
-    authorize_url: str
+    authorize_url: Optional[str] = None
     scope: Optional[str] = None
     redirect_port: int = 8400
+    auth_mode: str = "interactive"
 
 
 class DatasphereAuthConnector:
@@ -40,13 +43,13 @@ class DatasphereAuthConnector:
     - Metadata
     """
 
-    def __init__(self, config: DatasphereConfig, oauth_handler: Optional[OAuthAuthCodeHandler] = None):
+    def __init__(self, config: DatasphereConfig, oauth_handler: Optional[OAuthHandlerType] = None):
         """
         Initialize Datasphere connector
 
         Args:
             config: Datasphere configuration
-            oauth_handler: Optional pre-configured OAuth Auth Code handler
+            oauth_handler: Optional pre-configured OAuth handler
         """
         self.config = config
         self.oauth_handler = oauth_handler
@@ -55,21 +58,43 @@ class DatasphereAuthConnector:
         logger.info(f"Datasphere connector initialized for {config.base_url}")
 
     async def initialize(self):
-        """Initialize the connector and acquire OAuth token via Authorization Code flow"""
-        if not self.oauth_handler:
-            self.oauth_handler = OAuthAuthCodeHandler(
-                client_id=self.config.client_id,
-                client_secret=self.config.client_secret,
-                authorize_url=self.config.authorize_url,
-                token_url=self.config.token_url,
-                redirect_port=self.config.redirect_port,
-                scope=self.config.scope,
-            )
+        """Initialize the connector and acquire OAuth token for configured auth mode."""
+        auth_mode = (self.config.auth_mode or "interactive").strip().lower()
 
-        # Trigger interactive browser login to acquire initial token
+        if not self.oauth_handler:
+            if auth_mode in {"interactive", "auth_code", "authorization_code"}:
+                if not self.config.authorize_url:
+                    raise ValueError("DATASPHERE_AUTHORIZE_URL is required when AUTH_MODE=interactive")
+
+                self.oauth_handler = OAuthAuthCodeHandler(
+                    client_id=self.config.client_id,
+                    client_secret=self.config.client_secret,
+                    authorize_url=self.config.authorize_url,
+                    token_url=self.config.token_url,
+                    redirect_port=self.config.redirect_port,
+                    scope=self.config.scope,
+                )
+                flow_name = "OAuth Authorization Code flow"
+            elif auth_mode in {"technical_user", "client_credentials", "tech_user"}:
+                self.oauth_handler = OAuthHandler(
+                    client_id=self.config.client_id,
+                    client_secret=self.config.client_secret,
+                    token_url=self.config.token_url,
+                    scope=self.config.scope,
+                )
+                flow_name = "OAuth Client Credentials flow"
+            else:
+                raise ValueError(
+                    f"Unsupported AUTH_MODE '{self.config.auth_mode}'. "
+                    "Use one of: interactive, technical_user, client_credentials."
+                )
+        else:
+            flow_name = f"preconfigured OAuth handler ({type(self.oauth_handler).__name__})"
+
+        # Acquire initial token for the selected flow
         await self.oauth_handler.get_token()
 
-        logger.info("Datasphere connector initialized with OAuth Authorization Code flow")
+        logger.info(f"Datasphere connector initialized with {flow_name}")
 
     async def _get_headers(self) -> Dict[str, str]:
         """
